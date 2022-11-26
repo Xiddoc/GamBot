@@ -36,7 +36,7 @@ class TeleBot:
         # Send the message
         resp = self.__s.post(
             url=API_URL.format(key, "sendMessage"),
-            data={
+            json={
                 "chat_id": chat_id,
                 "text": txt,
                 "disable_notification": no_sound
@@ -62,7 +62,7 @@ class TeleBot:
         # Send the message
         resp = self.__s.post(
             url=API_URL.format(key, "copyMessage"),
-            data={
+            json={
                 "chat_id": to_chat_id,
                 "from_chat_id": from_chat_id,
                 "message_id": msg_id,
@@ -90,7 +90,7 @@ class TeleBot:
     def del_msg(self, chat_id: int, msg_id: int) -> Response:
         return self.__s.post(
             url=API_URL.format(self.__keys[0], "deleteMessage"),
-            data={
+            json={
                 "chat_id": chat_id,
                 "message_id": msg_id
             },
