@@ -102,98 +102,122 @@ while True:
     for upd in updates:
         # if the update is a message
         # as opposed to an update or deletion
-        if "message" in upd and "text" in upd["message"]:
-            # if in private
+        if "message" in upd:
+            """
+            
+            If this is a private message, then this is either:
+            - the backend user messaging the frontend user
+            - a private command, such as a new user trying to backdoor, or a status check
+            
+            """
             if upd["message"]["chat"]["type"] == "private":
-                # If the message is from the backdoor user
-                # and not a backdoor update
-                if upd["message"]["chat"]["id"] == backdoor_user:
-                    if "text" in upd['message'] and upd["message"]["text"] not in ALL_COMMANDS:
-                        # Get the text
+                """
+
+                Parse private chat bot commands.
+
+                """
+                if "text" in upd["message"] and upd["message"]["text"] in ALL_COMMANDS:
+                    # and an updater command
+                    if upd["message"]["text"] == BACKDOOR_COMMAND:
+                        log.info(f"Updated backdoor user to user with ID #{backdoor_user}...")
+                        # inform old user of update
+                        tele.send_msg(
+                            chat_id=backdoor_user,
+                            txt=f"Backdoor user has changed. You can message"
+                                f" later by running the {BACKDOOR_COMMAND} command.",
+                            auto_del=False,
+                            rand_bot=False
+                        )
+                        # get new ID
+                        backdoor_user = upd["message"]["chat"]["id"]
+                        # Add Username:ID for later searching, if possible
+                        if 'username' in upd["message"]["chat"]:
+                            user_to_id[upd["message"]["chat"]["username"]] = backdoor_user
+                        # inform new user of update
+                        tele.send_msg(
+                            chat_id=upd["message"]["chat"]["id"],
+                            txt="You have been set to the backdoor user. You should now be "
+                                "able to send messages to this bot to talk. Still in testing/development.",
+                            auto_del=False,
+                            rand_bot=False
+                        )
+                    elif upd["message"]["text"] == STATUS_COMMAND:
+                        log.info(f"Status was called...")
+                        # convert to username
+                        matching_username = None
+                        for username, user_id in user_to_id.items():
+                            if user_id == backdoor_user:
+                                # hash username and send back
+                                matching_username = md5(username.encode()).hexdigest()
+                                break
+                        # send status
+                        tele.send_msg(
+                            chat_id=upd["message"]["chat"]["id"],
+                            txt=f"Bot status is on: {backdoor_user} <{matching_username}>",
+                            auto_del=False,
+                            rand_bot=False
+                        )
+
+                elif upd["message"]["chat"]["id"] == backdoor_user:
+                    """
+                
+                    If the message is FROM the backend user.
+                    Get the message and send it to the front end user.
+                    
+                    """
+                    # Get the text from the msg / pic caption
+                    txt = "<error>"
+                    if "text" in upd["message"]:
                         txt = upd["message"]["text"]
+                    elif "photo" in upd["message"]:
+                        txt = upd["message"]['caption'] if 'caption' in upd["message"] else ''
 
-                        # Push the message to history
+                    # Push the message to history
+                    if "photo" in upd["message"]:
+                        msg_history.append('<photo> ' + txt)
+                    else:
                         msg_history.append(txt)
-                        # Clear up history if necessary
-                        if len(msg_history) > MAX_HISTORY:
-                            msg_history = msg_history[-MAX_HISTORY:]
 
-                        # If this is a reply,
-                        if 'reply_to_message' in upd["message"] and 'text' in upd["message"]['reply_to_message']:
-                            # Format the reply
-                            """
-                            > Old msg (replied to)
-                            > another line
-                            
-                            New msg (the reply)
-                            """
-                            txt = "\n".join(
-                                '> ' + line for line in upd['message']['reply_to_message']['text'].splitlines()
-                            ) + "\n\n" + txt
+                    # Clear up history if necessary
+                    if len(msg_history) > MAX_HISTORY:
+                        msg_history = msg_history[-MAX_HISTORY:]
 
-                        # first check if we have the frontend ID loaded
-                        if frontdoor_chat:
-                            # send the msg to the front-door user
-                            tele.send_msg(chat_id=frontdoor_chat, txt=txt, auto_del=True, rand_bot=True)
-                        else:
-                            # Send warning
-                            log.warn("No frontend chat found...")
+                    # If this is a reply,
+                    if 'reply_to_message' in upd["message"] and 'text' in upd["message"]['reply_to_message']:
+                        # Format the reply
+                        """
+                        > Old msg (replied to)
+                        > another line
+                        
+                        New msg (the reply)
+                        """
+                        txt = "\n".join(
+                            '> ' + line for line in upd['message']['reply_to_message']['text'].splitlines()
+                        ) + "\n\n" + txt
 
-                # and an updater command
-                if upd["message"]["text"] == BACKDOOR_COMMAND:
-                    log.info(f"Updated backdoor user to user with ID #{backdoor_user}...")
-                    # inform old user of update
-                    tele.send_msg(
-                        chat_id=backdoor_user,
-                        txt=f"Backdoor user has changed. You can message"
-                            f" later by running the {BACKDOOR_COMMAND} command.",
-                        auto_del=False,
-                        rand_bot=False
-                    )
-                    # get new ID
-                    backdoor_user = upd["message"]["chat"]["id"]
-                    # Add Username:ID for later searching, if possible
-                    if 'username' in upd["message"]["chat"]:
-                        user_to_id[upd["message"]["chat"]["username"]] = backdoor_user
-                    # inform new user of update
-                    tele.send_msg(
-                        chat_id=upd["message"]["chat"]["id"],
-                        txt="You have been set to the backdoor user. You should now be "
-                            "able to send messages to this bot to talk. Still in testing/development.",
-                        auto_del=False,
-                        rand_bot=False
-                    )
-                elif upd["message"]["text"] == STATUS_COMMAND:
-                    log.info(f"Status was called...")
-                    # convert to username
-                    matching_username = None
-                    for username, user_id in user_to_id.items():
-                        if user_id == backdoor_user:
-                            # hash username and send back
-                            matching_username = md5(username.encode()).hexdigest()
-                            break
-                    # send status
-                    tele.send_msg(
-                        chat_id=upd["message"]["chat"]["id"],
-                        txt=f"Bot status is on: {backdoor_user} <{matching_username}>",
-                        auto_del=False,
-                        rand_bot=False
-                    )
+                    # first check if we have the frontend ID loaded
+                    if frontdoor_chat:
+                        # send the msg to the front-door user
+                        tele.copy_msg(
+                            from_chat_id=backdoor_user,
+                            to_chat_id=frontdoor_chat,
+                            msg_id=upd['message']['message_id'],
+                            txt=txt,
+                            rand_bot=True,
+                            auto_del=True
+                        )
+                    else:
+                        # Send warning
+                        log.warn("No frontend chat found...")
 
-            # if in a group chat
-            # and not a bot
+            """
+
+            If this is in a group chat, and it's not a bot.
+            
+            """
             if upd["message"]["chat"]["type"] != "private" and not upd["message"]["from"]["is_bot"]:
                 # update front door chat ID
                 frontdoor_chat = upd["message"]["chat"]["id"]
-
-                # Get the text of the message
-                txt = upd["message"]["text"]
-
-                # If this is a reply,
-                if 'reply_to_message' in upd["message"] and 'text' in upd["message"]['reply_to_message']:
-                    # Format the reply
-                    txt = "\n".join("> " + line for line in upd["message"]['reply_to_message']['text'].splitlines()) \
-                          + "\n\n" + txt
 
                 # delete the original message
                 tele.del_msg(
@@ -216,45 +240,71 @@ while True:
 
                 # if there is a registered backdoor
                 if backdoor_user:
-                    # if the message text is a command
-                    if txt.startswith(REQUEST_COMMAND + " @"):
-                        # Check if we have the username's ID saved
-                        requested_user = txt.split(" ")[1].strip()[1:]
-                        if requested_user in user_to_id:
-                            tele.send_msg(
-                                chat_id=user_to_id[requested_user],
-                                txt=f"You were requested for summonings. If you choose to accept, "
-                                    f"then run the {BACKDOOR_COMMAND} command to start the chat.",
-                                auto_del=False,
-                                rand_bot=False
-                            )
-                    elif txt.startswith(REPLAY_COMMAND + " "):
-                        # Get the amount of messages we want to resend
-                        replay_count = txt.split(" ")[1].strip()
-                        # Type / argument check
-                        if replay_count.isnumeric() and 0 < int(replay_count) <= len(msg_history):
-                            # Convert to int
-                            replay_count = int(replay_count)
+                    """
 
-                            # first check if we have the frontend ID loaded
-                            if frontdoor_chat:
-                                # send the msg to the front door user
+                    Parse public chat bot commands.
+
+                    """
+                    if "text" in upd["message"] and upd["message"]["text"] in ALL_COMMANDS:
+                        # Get the text of the message
+                        txt = upd["message"]["text"]
+
+                        # if the message text is a command
+                        if txt.startswith(REQUEST_COMMAND + " @"):
+                            # Check if we have the username's ID saved
+                            requested_user = txt.split(" ")[1].strip()[1:]
+                            if requested_user in user_to_id:
+                                tele.send_msg(
+                                    chat_id=user_to_id[requested_user],
+                                    txt=f"You were requested for summonings. If you choose to accept, "
+                                        f"then run the {BACKDOOR_COMMAND} command to start the chat.",
+                                    auto_del=False,
+                                    rand_bot=False
+                                )
+                        elif txt.startswith(REPLAY_COMMAND + " "):
+                            # Get the amount of messages we want to resend
+                            replay_count = txt.split(" ")[1].strip()
+                            # Type / argument check
+                            if replay_count.isnumeric() and 0 < int(replay_count) <= len(msg_history):
+                                # Convert to int
+                                replay_count = int(replay_count)
+
+                                # send the msg back to the front door user
                                 tele.send_msg(
                                     chat_id=frontdoor_chat,
                                     txt="\n\n".join("USER: " + old_msg for old_msg in msg_history[-replay_count:]),
                                     auto_del=True,
                                     rand_bot=True
                                 )
-                            else:
-                                # Send warning
-                                log.warn("No frontend chat found...")
                     else:
+                        # Get the text from the msg / pic caption
+                        txt = "<error>"
+                        if "text" in upd["message"]:
+                            txt = upd["message"]["text"]
+                        elif "photo" in upd["message"]:
+                            txt = upd["message"]['caption'] if 'caption' in upd["message"] else ''
+
+                        # If this is a reply,
+                        if 'reply_to_message' in upd["message"] and 'text' in upd["message"]['reply_to_message']:
+                            # Format the reply
+                            """
+                            > Old msg (replied to)
+                            > another line
+
+                            New msg (the reply)
+                            """
+                            txt = "\n".join(
+                                '> ' + line for line in upd['message']['reply_to_message']['text'].splitlines()
+                            ) + "\n\n" + txt
+
                         # send the original message back to the backdoor user
-                        tele.send_msg(
-                            chat_id=backdoor_user,
+                        tele.copy_msg(
+                            from_chat_id=frontdoor_chat,
+                            to_chat_id=backdoor_user,
+                            msg_id=upd['message']['message_id'],
                             txt=txt,
-                            auto_del=False,
-                            rand_bot=False
+                            rand_bot=False,
+                            auto_del=False
                         )
                 else:
                     log.warn(

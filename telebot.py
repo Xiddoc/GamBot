@@ -51,17 +51,24 @@ class TeleBot:
 
         return resp
 
-    def forward_msg(self, from_chat_id: int, to_chat_id: int, msg_id: int, rand_bot: bool, auto_del: bool) -> Response:
+    def copy_msg(self,
+                 from_chat_id: int, to_chat_id: int,  # Chat identifiers
+                 msg_id: int, txt: str,  # Message identifiers
+                 rand_bot: bool, auto_del: bool) -> Response:
+
         # Get the key to use
         key = self.__get_key(rand_bot)
 
         # Send the message
         resp = self.__s.post(
-            url=API_URL.format(key, "forwardMessage"),
+            url=API_URL.format(key, "copyMessage"),
             data={
                 "chat_id": to_chat_id,
                 "from_chat_id": from_chat_id,
-                "message_id": msg_id
+                "message_id": msg_id,
+                "caption": txt,
+                "protect_content": True,
+                "allow_sending_without_reply": True
             },
             timeout=REQ_TIMEOUT
         )
