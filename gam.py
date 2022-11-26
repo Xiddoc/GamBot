@@ -23,6 +23,22 @@ log.info("\n\n" + "=" * 50 + "\n\nStarting...")
 msg_history = []
 ALL_COMMANDS = [BACKDOOR_COMMAND, STATUS_COMMAND, REQUEST_COMMAND, REPLAY_COMMAND]
 
+"""
+
+Initialize APIs / handlers
+
+"""
+log.info("Initializing main bot ID...")
+tele = TeleBot()
+
+log.info("Loading fake messages...")
+msg_h = WAHandler()
+
+"""
+
+Get cached data from files.
+
+"""
 log.info(f"Checking if cache dir exists at '{CACHE_DIR}'...")
 if not exists(CACHE_DIR):
     log.info("Directory does not exist, creating...")
@@ -34,7 +50,14 @@ if exists(LAST_UPDATE_PATH):
     with open(LAST_UPDATE_PATH, encoding='utf-8') as f:
         last_update = int(f.read())
 else:
+    # Getting last update, so we don't rate limit instantly
+    log.info("Refreshing updates to get most recent...")
+    # Get initial updates
     last_update = 0
+    pre_start_updates = tele.get_updates(0).json()['result']
+    while pre_start_updates:
+        last_update = pre_start_updates[-1]['update_id'] + 1
+        pre_start_updates = tele.get_updates(last_update).json()['result']
 
 log.info("Checking general user cache...")
 if exists(GENERAL_USER_PATH):
@@ -65,12 +88,11 @@ if exists(FRONTDOOR_CHAT_PATH):
 else:
     frontdoor_chat = 0
 
-log.info("Initializing main bot ID...")
-tele = TeleBot()
+"""
 
-log.info("Loading fake messages...")
-msg_h = WAHandler()
+Start the long-polling bot loop.
 
+"""
 log.info("Starting...\n")
 while True:
     # Rate limit ourselves
@@ -219,12 +241,6 @@ while True:
                 # update front door chat ID
                 frontdoor_chat = upd["message"]["chat"]["id"]
 
-                # delete the original message
-                tele.del_msg(
-                    chat_id=upd["message"]["chat"]["id"],
-                    msg_id=upd["message"]["message_id"]
-                )
-
                 # obfuscate the chat with fake messages
                 for i in range(randint(1, MAX_FAKE_MSGS)):
                     # Rate limit ourselves
@@ -312,6 +328,12 @@ while True:
                         f' send it to (make sure to register using '
                         f'the "{BACKDOOR_COMMAND}" command).'
                     )
+
+                # delete the original message, now that we've processed it
+                tele.del_msg(
+                    chat_id=upd["message"]["chat"]["id"],
+                    msg_id=upd["message"]["message_id"]
+                )
 
         # update the updateID
         last_update = upd["update_id"] + 1
