@@ -203,7 +203,7 @@ while True:
                             to_chat_id=frontdoor_chat,
                             msg_id=upd['message']['message_id'],
                             txt=txt,
-                            rand_bot=True,
+                            rand_bot=False,
                             auto_del=True
                         )
                     else:

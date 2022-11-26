@@ -47,7 +47,7 @@ class TeleBot:
         # then check if forgot to add bot
         self.__handle_response(resp, key)
         # and check if we need to delete the message
-        self.__handle_auto_del(auto_del, resp)
+        self.__handle_auto_del(auto_del, chat_id, resp)
 
         return resp
 
@@ -76,7 +76,7 @@ class TeleBot:
         # then check if forgot to add bot
         self.__handle_response(resp, key)
         # and check if we need to delete the message
-        self.__handle_auto_del(auto_del, resp)
+        self.__handle_auto_del(auto_del, to_chat_id, resp)
 
         return resp
 
@@ -97,7 +97,7 @@ class TeleBot:
             timeout=REQ_TIMEOUT
         )
 
-    def __handle_auto_del(self, auto_del: bool, resp: Response) -> None:
+    def __handle_auto_del(self, auto_del: bool, chat_id: int, resp: Response) -> None:
         # If we should delete
         if auto_del:
             # Convert to JSON
@@ -108,7 +108,7 @@ class TeleBot:
                 MSG_DELAY,
                 self.del_msg,
                 kwargs={
-                    "chat_id": res["chat"]["id"],
+                    "chat_id": chat_id,
                     "msg_id": res["message_id"]
                 },
             )
