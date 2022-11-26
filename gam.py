@@ -261,7 +261,7 @@ while True:
                     Parse public chat bot commands.
 
                     """
-                    if "text" in upd["message"] and upd["message"]["text"] in ALL_COMMANDS:
+                    if "text" in upd["message"] and any(upd["message"]["text"].startswith(cmd) for cmd in ALL_COMMANDS):
                         # Get the text of the message
                         txt = upd["message"]["text"]
 
