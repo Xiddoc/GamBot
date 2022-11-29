@@ -1,4 +1,4 @@
-# GamBot
+# <img width=350 src=https://repository-images.githubusercontent.com/560391891/f87fd37e-c20b-42c9-9da4-9bcfa26a7302 />
 
 A program which leverages Telegram bots to create an "obfuscated secret chat".
 
