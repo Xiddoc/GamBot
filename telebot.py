@@ -1,6 +1,6 @@
 from random import choice
 from threading import Timer
-from typing import Dict
+from typing import Dict, Optional
 
 from requests import Response
 
@@ -47,7 +47,7 @@ class TeleBot:
         # then check if forgot to add bot
         self.__handle_response(resp, key)
         # and check if we need to delete the message
-        self.__handle_auto_del(auto_del, chat_id, resp)
+        self.__handle_auto_del(auto_del, chat_id, resp, key)
 
         return resp
 
@@ -76,7 +76,7 @@ class TeleBot:
         # then check if forgot to add bot
         self.__handle_response(resp, key)
         # and check if we need to delete the message
-        self.__handle_auto_del(auto_del, to_chat_id, resp)
+        self.__handle_auto_del(auto_del, to_chat_id, resp, key)
 
         return resp
 
@@ -87,9 +87,14 @@ class TeleBot:
             timeout=REQ_TIMEOUT
         )
 
-    def del_msg(self, chat_id: int, msg_id: int) -> Response:
+    def del_msg(self, chat_id: int, msg_id: int, key: Optional[str] = None) -> Response:
+        if key is None:
+            used_key = self.__keys[0]
+        else:
+            used_key = key
+
         return self.__s.post(
-            url=API_URL.format(self.__keys[0], "deleteMessage"),
+            url=API_URL.format(used_key, "deleteMessage"),
             json={
                 "chat_id": chat_id,
                 "message_id": msg_id
@@ -97,7 +102,7 @@ class TeleBot:
             timeout=REQ_TIMEOUT
         )
 
-    def __handle_auto_del(self, auto_del: bool, chat_id: int, resp: Response) -> None:
+    def __handle_auto_del(self, auto_del: bool, chat_id: int, resp: Response, key: str) -> None:
         # If we should delete
         if auto_del:
             # Convert to JSON
@@ -109,7 +114,8 @@ class TeleBot:
                 self.del_msg,
                 kwargs={
                     "chat_id": chat_id,
-                    "msg_id": res["message_id"]
+                    "msg_id": res["message_id"],
+                    "key": key
                 },
             )
             # Start timer
