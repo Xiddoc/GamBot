@@ -69,7 +69,7 @@ else:
 
 # The warning triggers if the dict is empty, not only if the file is not found
 if not user_to_id:
-    log.warn(f'No user cache found, users will need to register using the "{BACKDOOR_COMMAND}" command.')
+    log.warning(f'No user cache found, users will need to register using the "{BACKDOOR_COMMAND}" command.')
 
 log.info("Checking backdoor user cache...")
 if exists(BACKDOOR_USER_PATH):
@@ -77,7 +77,7 @@ if exists(BACKDOOR_USER_PATH):
     with open(BACKDOOR_USER_PATH, encoding='utf-8') as f:
         backdoor_user = int(f.read())
 else:
-    log.warn(f'No backdoor user found (make sure to register using the "{BACKDOOR_COMMAND}" command).')
+    log.warning(f'No backdoor user found (make sure to register using the "{BACKDOOR_COMMAND}" command).')
     backdoor_user = 0
 
 log.info("Checking frontend chat cache...")
@@ -230,7 +230,7 @@ while True:
                         )
                     else:
                         # Send warning
-                        log.warn("No frontend chat found...")
+                        log.warning("No frontend chat found...")
 
             """
 
@@ -323,7 +323,7 @@ while True:
                             auto_del=False
                         )
                 else:
-                    log.warn(
+                    log.warning(
                         f'Removed message but there was no backdoor to'
                         f' send it to (make sure to register using '
                         f'the "{BACKDOOR_COMMAND}" command).'
