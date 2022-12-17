@@ -9,7 +9,7 @@ Configuration file.
 MSG_DELAY = 10.0
 
 # How many messages to save cache
-MAX_HISTORY = 20
+MAX_HISTORY = 50
 
 # Maximum fake messages to send per 1 message from you
 MAX_FAKE_MSGS = 2
@@ -21,7 +21,7 @@ CACHE_DIR = "./cache"
 AUTH_FILE = "./auth_keys.env"
 
 # Log to console
-CONSOLE_LOGGING = False
+CONSOLE_LOGGING = True
 
 # Bot commands
 BACKDOOR_COMMAND = "/backdoor"
