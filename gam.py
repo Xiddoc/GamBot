@@ -141,20 +141,24 @@ while True:
                 if "text" in upd["message"] and upd["message"]["text"] in ALL_COMMANDS:
                     # and an updater command
                     if upd["message"]["text"] == BACKDOOR_COMMAND:
-                        log.info(f"Updated backdoor user to user with ID #{backdoor_user}...")
-                        # inform old user of update
-                        tele.send_msg(
-                            chat_id=backdoor_user,
-                            txt=f"Backdoor user has changed. You can message"
-                                f" later by running the {BACKDOOR_COMMAND} command.",
-                            auto_del=False,
-                            rand_bot=False
-                        )
+                        # inform old user of update, if there is one
+                        if backdoor_user:
+                            tele.send_msg(
+                                chat_id=backdoor_user,
+                                txt=f"Backdoor user has changed. You can message"
+                                    f" later by running the {BACKDOOR_COMMAND} command.",
+                                auto_del=False,
+                                rand_bot=False
+                            )
+
                         # get new ID
                         backdoor_user = upd["message"]["chat"]["id"]
+                        log.info(f"Updated backdoor user to user with ID #{backdoor_user}...")
+
                         # Add Username:ID for later searching, if possible
                         if 'username' in upd["message"]["chat"]:
                             user_to_id[upd["message"]["chat"]["username"]] = backdoor_user
+
                         # inform new user of update
                         tele.send_msg(
                             chat_id=upd["message"]["chat"]["id"],
