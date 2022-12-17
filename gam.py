@@ -227,14 +227,22 @@ while True:
                     # first check if we have the frontend ID loaded
                     if frontdoor_chat:
                         # send the msg to the front-door user
-                        tele.copy_msg(
-                            from_chat_id=backdoor_user,
-                            to_chat_id=frontdoor_chat,
-                            msg_id=upd['message']['message_id'],
-                            txt=txt,
-                            rand_bot=False,
-                            auto_del=True
-                        )
+                        if is_media:
+                            tele.copy_msg(
+                                from_chat_id=backdoor_user,
+                                to_chat_id=frontdoor_chat,
+                                msg_id=upd['message']['message_id'],
+                                txt=txt,
+                                rand_bot=False,
+                                auto_del=True
+                            )
+                        else:
+                            tele.send_msg(
+                                chat_id=frontdoor_chat,
+                                txt=txt,
+                                rand_bot=False,
+                                auto_del=True
+                            )
                     else:
                         # Send warning
                         log.warning("No frontend chat found...")
@@ -339,14 +347,22 @@ while True:
                             ) + "\n\n" + txt
 
                         # send the original message back to the backdoor user
-                        tele.copy_msg(
-                            from_chat_id=frontdoor_chat,
-                            to_chat_id=backdoor_user,
-                            msg_id=upd['message']['message_id'],
-                            txt=txt,
-                            rand_bot=False,
-                            auto_del=False
-                        )
+                        if is_media:
+                            tele.copy_msg(
+                                from_chat_id=frontdoor_chat,
+                                to_chat_id=backdoor_user,
+                                msg_id=upd['message']['message_id'],
+                                txt=txt,
+                                rand_bot=False,
+                                auto_del=False
+                            )
+                        else:
+                            tele.send_msg(
+                                chat_id=backdoor_user,
+                                txt=txt,
+                                rand_bot=False,
+                                auto_del=False
+                            )
                 else:
                     log.warning(
                         f'Removed message but there was no backdoor to'
