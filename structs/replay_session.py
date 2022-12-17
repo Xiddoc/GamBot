@@ -2,7 +2,7 @@ from requests import Session, RequestException
 from time import sleep
 
 from config import REQ_TIMEOUT
-from gam_logging import log
+from handlers.gam_logging import log
 
 
 class ReplayableSession(Session):

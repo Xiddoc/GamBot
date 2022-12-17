@@ -1,7 +1,7 @@
 from random import randint
 
 from config import FAKE_MSG_PATH
-from gam_logging import log
+from handlers.gam_logging import log
 
 
 class WAHandler:

@@ -5,8 +5,8 @@ from typing import Dict, Optional
 from requests import Response
 
 from config import AUTH_FILE, API_URL, REQ_TIMEOUT, MSG_DELAY
-from gam_logging import log
-from replay_session import ReplayableSession
+from handlers.gam_logging import log
+from structs.replay_session import ReplayableSession
 
 
 class TeleBot:

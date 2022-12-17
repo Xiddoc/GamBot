@@ -13,9 +13,9 @@ from random import randint
 from time import sleep
 
 from config import *
-from gam_logging import log
-from wa_handler import WAHandler
-from telebot import TeleBot
+from handlers.gam_logging import log
+from handlers.wa_handler import WAHandler
+from handlers.telebot import TeleBot
 
 log.info("\n\n" + "=" * 50 + "\n\nStarting...")
 
@@ -297,11 +297,19 @@ while True:
                                     rand_bot=True
                                 )
                     else:
+                        """
+                        
+                        This is a message from a public chat going out to the backdoor user.
+                        
+                        """
+
                         # Get the text from the msg / pic caption
                         txt = "<error>"
+                        is_media = False
                         if "text" in upd["message"]:
                             txt = upd["message"]["text"]
-                        elif "photo" in upd["message"]:
+                        elif "photo" in upd["message"] or "video" in upd["message"]:
+                            is_media = True
                             txt = upd["message"]['caption'] if 'caption' in upd["message"] else ''
 
                         # If this is a reply,
