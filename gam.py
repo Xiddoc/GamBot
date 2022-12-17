@@ -16,11 +16,12 @@ from config import *
 from handlers.gam_logging import log
 from handlers.wa_handler import WAHandler
 from handlers.telebot import TeleBot
+from structs.timed_array import TimedArray
 
 log.info("\n\n" + "=" * 50 + "\n\nStarting...")
 
 # Initialize objects for bot to use later
-msg_history = []
+msg_history = TimedArray()
 ALL_COMMANDS = [BACKDOOR_COMMAND, STATUS_COMMAND, REQUEST_COMMAND, REPLAY_COMMAND]
 
 """
@@ -193,16 +194,18 @@ while True:
                     """
                     # Get the text from the msg / pic caption
                     txt = "<error>"
+                    is_media = False
                     if "text" in upd["message"]:
                         txt = upd["message"]["text"]
-                    elif "photo" in upd["message"]:
+                    elif "photo" in upd["message"] or "video" in upd["message"]:
+                        is_media = True
                         txt = upd["message"]['caption'] if 'caption' in upd["message"] else ''
 
                     # Push the message to history
-                    if "photo" in upd["message"]:
-                        msg_history.append('<photo> ' + txt)
+                    if is_media:
+                        msg_history.append('USER: <media> ' + txt)
                     else:
-                        msg_history.append(txt)
+                        msg_history.append(f'USER: {txt}')
 
                     # Clear up history if necessary
                     if len(msg_history) > MAX_HISTORY:
@@ -292,7 +295,7 @@ while True:
                                 # send the msg back to the front door user
                                 tele.send_msg(
                                     chat_id=frontdoor_chat,
-                                    txt="\n\n".join("USER: " + old_msg for old_msg in msg_history[-replay_count:]),
+                                    txt="\n\n".join(msg_history[-replay_count:]),
                                     auto_del=True,
                                     rand_bot=True
                                 )
@@ -311,6 +314,16 @@ while True:
                         elif "photo" in upd["message"] or "video" in upd["message"]:
                             is_media = True
                             txt = upd["message"]['caption'] if 'caption' in upd["message"] else ''
+
+                        # Push the message to history
+                        if is_media:
+                            msg_history.append('ME: <media> ' + txt)
+                        else:
+                            msg_history.append(f'ME: {txt}')
+
+                        # Clear up history if necessary
+                        if len(msg_history) > MAX_HISTORY:
+                            msg_history = msg_history[-MAX_HISTORY:]
 
                         # If this is a reply,
                         if 'reply_to_message' in upd["message"] and 'text' in upd["message"]['reply_to_message']:
